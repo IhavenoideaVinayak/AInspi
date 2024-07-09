@@ -1,6 +1,6 @@
 import os
 from flask import Flask, render_template, request, send_from_directory
-from openpyxl import Workbook
+from openpyxl import Workbook, load_workbook
 
 app = Flask(__name__)
 
@@ -30,6 +30,7 @@ def register():
         ws.append(['Name', 'Email', 'Phone', 'Message'])
     else:
         wb = load_workbook(excel_path)
+        except FileNotFoundError:
         ws = wb.active
 
     ws.append([name, email, phone, message])
