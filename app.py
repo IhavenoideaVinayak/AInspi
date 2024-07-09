@@ -1,8 +1,12 @@
-from flask import Flask, render_template, request, jsonify
-from openpyxl import load_workbook, Workbook
 import os
+from flask import Flask, render_template, request, send_from_directory
+from openpyxl import Workbook
 
 app = Flask(__name__)
+
+# Define a directory outside of the web server root to store sensitive files
+UPLOAD_FOLDER = os.path.join(app.instance_path, 'uploads')
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Route to render registration form
 @app.route('/')
@@ -18,25 +22,27 @@ def register():
     phone = request.form.get('phone')
     message = request.form.get('message')
 
-    # Define the filename
-    filename = 'registration_data.xlsx'
-
-    # Check if the file exists
-    if os.path.exists(filename):
-        wb = load_workbook(filename)
-        ws = wb.active
-    else:
+    # Store data in Excel
+    excel_path = os.path.join(UPLOAD_FOLDER, 'registration_data.xlsx')
+    if not os.path.exists(excel_path):
         wb = Workbook()
         ws = wb.active
-        # Append headers if the file is new
         ws.append(['Name', 'Email', 'Phone', 'Message'])
+    else:
+        wb = load_workbook(excel_path)
+        ws = wb.active
 
-    # Append the new data
     ws.append([name, email, phone, message])
-    wb.save(filename)  # Save Excel file
+    wb.save(excel_path)
 
-    # Provide feedback to user (using JSON for simplicity)
-    return jsonify({"message": "Thank you for registering!"})
+    # Provide feedback to user (optional)
+    return 'Thank you for registering!'
+
+# Route to download the Excel file (restricted access)
+@app.route('/download_excel')
+def download_excel():
+    excel_path = os.path.join(UPLOAD_FOLDER, 'registration_data.xlsx')
+    return send_from_directory(directory=UPLOAD_FOLDER, filename='registration_data.xlsx', as_attachment=True)
 
 if __name__ == '__main__':
     app.run(debug=True)
