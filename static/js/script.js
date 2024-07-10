@@ -1,4 +1,4 @@
-document.getElementById("registerForm").addEventListener("submit", function(event) {
+/* document.getElementById("registerForm").addEventListener("submit", function(event) {
     event.preventDefault();
 
     var formData = new FormData(this);
@@ -20,3 +20,4 @@ document.getElementById("registerForm").addEventListener("submit", function(even
         console.error("Error:", error);
     });
 });
+*/
