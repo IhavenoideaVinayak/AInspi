@@ -1,49 +1,46 @@
-import os
-from flask import Flask, render_template, request, send_from_directory
+from flask import Flask, request, jsonify, render_template
 from openpyxl import Workbook, load_workbook
+import os
 
 app = Flask(__name__)
 
-# Define a directory outside of the web server root to store sensitive files
-UPLOAD_FOLDER = os.path.join(app.instance_path, 'uploads')
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
-# Route to render registration form
 @app.route('/')
 def index():
-    return render_template('register.html')
+    return render_template('index.html')
 
-# Route to handle form submission
 @app.route('/register', methods=['POST'])
 def register():
-    # Get form data
-    name = request.form.get('name')
-    email = request.form.get('email')
-    phone = request.form.get('phone')
-    message = request.form.get('message')
+    try:
+        # Get form data
+        name = request.form.get('name')
+        email = request.form.get('email')
 
-    # Store data in Excel
-    excel_path = os.path.join(UPLOAD_FOLDER, 'registration_data.xlsx')
-    if not os.path.exists(excel_path):
-        wb = Workbook()
+        # Define the path to your Excel file
+        excel_path = 'registration_data.xlsx'
+
+        # Load existing workbook or create a new one if it doesn't exist
+        if os.path.exists(excel_path):
+            wb = load_workbook(excel_path)
+        else:
+            wb = Workbook()
+            ws = wb.active
+            ws.append(["Name", "Email"])  # Add header row
+
         ws = wb.active
-        ws.append(['Name', 'Email', 'Phone', 'Message'])
-    else:
-        wb = load_workbook(excel_path)
-        except FileNotFoundError:
-        ws = wb.active
 
-    ws.append([name, email, phone, message])
-    wb.save(excel_path)
+        # Append data to the worksheet
+        ws.append([name, email])
 
-    # Provide feedback to user (optional)
-    return 'Thank you for registering!'
+        # Save the workbook
+        wb.save(excel_path)
 
-# Route to download the Excel file (restricted access)
-@app.route('/download_excel')
-def download_excel():
-    excel_path = os.path.join(UPLOAD_FOLDER, 'registration_data.xlsx')
-    return send_from_directory(directory=UPLOAD_FOLDER, filename='registration_data.xlsx', as_attachment=True)
+        # Return the success page
+        return render_template('success.html')
+
+    except Exception as e:
+        # Log the exception (optional)
+        app.logger.error(f"Error during registration: {e}")
+        return jsonify({'error': 'Internal Server Error'}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
